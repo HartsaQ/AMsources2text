@@ -19,19 +19,19 @@ Script goes through all pdf files on given --filepath. Opens them one by one, pa
 Datastructure book_settings in book_data.py file is used with text parsing. Official filename of sourcebook is used as key. If your files have different names the you need to edit those names in `book_settings`. `headers` contain list of header texts used in the sourcebook. Headers are in the middle top on most of the pages. `Limits.start` is the first page to read text from. It is set to drop front cover, credits and table of content. `Ignore_images` list contains large or whole page background images in the pdf. When parsing a page of a sourcebook, script collects images on the page, but images on the ignore_images list are dropped out. Remaining images are illustrations and images for sidebar texts. Actually bounding boxes for images are collected and texts inside sidebars are then texts that are inside a bounding box of an image. Rest of the values are for extracting character statistics. So for text extraction you need name of the file (key), ignore_images and headers. Optionally you can set `limits.start` to drop pages from the start and `limit.end` to drop pages of from the end. Use actual page numbers of PDF files for these values, script takes care on differences of indexing lists and page numbering. NOTE: If you want to extract all pages from files credits should ok, front cover is an image and there is no text and table of contents will look pretty ugly, but without page numbers on the text it is quite useless. References and sources at end of books come out nice.
 PLEASE don't add information of sourcebooks that are not under open licence to book_settings and use only filenames of the original source.
 
-NOTE this is not a generic PDF reader. It is fitted to parse official Ars Magica sourcebooks. It relies on commonalities among those sourcebooks. Commonalities the script relies on are:
+NOTE this is not a generic PDF reader. It is fitted to parse Ars Magica sourcebooks. It relies on commonalities among those sourcebooks. Commonalities the script relies on are:
 * fonts used in headings of the books
-* how different fonts are used
+* how fonts are used
 * Sidebar texts are set on top of an image
 * Usage of headers
 
-Known problems, I will look into:
-* Some main headings are missing (page 15 of Guardians Of The Forests)
-* Sometimes text is erroneusly marked as sidebar text (page 15 of Guardians Of The Forests)
+Known problems I will look into:
+* Some main headings are missing (for example page 15 of Guardians Of The Forests)
+* Sometimes text is erroneusly marked as sidebar text (for example page 15 of Guardians Of The Forests)
 * Headings on two lines are not always recognized as headings
 * Paragraphs split on two columns
 
-Known problems, I'm ignoring:
+Known problems I'm ignoring:
 * Tables
 * bold text
 * italics text
