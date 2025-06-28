@@ -5,8 +5,8 @@ It started as a project to get character (monsters, magi, creatures etc.) statis
 It's not perfect. Sometimes headings in sidebars go in wrong order and some headings in the text are not recognized, but main structure of the text is pretty good. Lots of details like tables, bold or italics text, indentation etc. is ignored. I don't need it with character statistics and getting them would require lots of work and a even deeper dive in into PDFs structure.
 
 Text structure is simple. Parts of text are marked in HTML like fashion
-There are four levels of headings h1-h4 marked with `<h1>HTML-tags</h1>`
-`<div>Text is marked with div-tags</div>` and `<sidebar>contents of sidebars are inside sidebar-tags</sidebar>`
+There are four levels of headings h1-h4 marked with `<h1>`headings-tags`</h1>`
+`<div>`Text is marked with div-tags`</div>` and `<sidebar>`contents of sidebars are inside sidebar-tags`</sidebar>`. A next line is added before `<sidebar>` and after headings and sidebar end tags.  
 That's it
 
 Text is put to file page by page. Main text is first and then sidebar section if there is one. There are no page endings or startings. Regular text is split in divs as pymupdf-library gives it. Extra white space is removed and words split to two lines with hyphen are combined. I cannot promise that words that naturally have hyphen are treated right. 
@@ -16,11 +16,27 @@ PDF's are read from a folder (`--filepath`) and written to a folder (`--outpath`
 
 Script goes through all pdf files on given --filepath. Opens them one by one, parses text from them and writes text to files in --outpath folder. Filename is taken from source file by replasing .pdf or .PDF with .txt, so Ars_sourcebook.pdf becomes Ars_sourcebook.txt. If there is already a file with same name in the --output folder it is overwritten.
 
-Datastructure book_settings in book_data.py file is used with text parsing. Official filename of sourcebook is used as key. If your files have different names the you need to edit those names in book_settings. headers contain list of header texts used in the sourcebook. Headers are in top middle of most of pages. Limist.start is the first page to read text from. Note: As usual numbering of a list (of pages in pdf) starts from zero, so add one to it to get corresponding page in the sourcebook. It is set to drop front cover, credits and table of content. Ignore_images list contains large or whole page background images in the file. When parsing a page of a sourcebook, script collects images on the page, but images on the ignore_images list are dropped out. Rest is illustrations and images for sidebar texts. Actually bounding boxes for images are collected and texts inside sidebars are then texts that are inside a bounding box of an image. Rest of the values are for extracting character statistics. So for text extraction you need name of the file (key), ignore_images and headers. Optionally you can set limits.start to drop pages from the start. NOTE: Credits should be okish, front cover is an image and there is no text and table of contents will look pretty ugly, but without page numbers on the text it is quite useless.
-PLEASE don't add information of sourcebooks that are not under open licence to book_settings and use filenames of the original source.
+Datastructure book_settings in book_data.py file is used with text parsing. Official filename of sourcebook is used as key. If your files have different names the you need to edit those names in `book_settings`. `headers` contain list of header texts used in the sourcebook. Headers are in the middle top on most of the pages. `Limits.start` is the first page to read text from. It is set to drop front cover, credits and table of content. `Ignore_images` list contains large or whole page background images in the pdf. When parsing a page of a sourcebook, script collects images on the page, but images on the ignore_images list are dropped out. Remaining images are illustrations and images for sidebar texts. Actually bounding boxes for images are collected and texts inside sidebars are then texts that are inside a bounding box of an image. Rest of the values are for extracting character statistics. So for text extraction you need name of the file (key), ignore_images and headers. Optionally you can set `limits.start` to drop pages from the start and `limit.end` to drop pages of from the end. Use actual page numbers of PDF files for these values, script takes care on differences of indexing lists and page numbering. NOTE: If you want to extract all pages from files credits should ok, front cover is an image and there is no text and table of contents will look pretty ugly, but without page numbers on the text it is quite useless. References and sources at end of books come out nice.
+PLEASE don't add information of sourcebooks that are not under open licence to book_settings and use only filenames of the original source.
 
 NOTE this is not a generic PDF reader. It is fitted to parse official Ars Magica sourcebooks. It relies on commonalities among those sourcebooks. Commonalities the script relies on are:
 * fonts used in headings of the books
 * how different fonts are used
 * Sidebar texts are set on top of an image
 * Usage of headers
+
+Known problems, I will look into:
+* Some main headings are missing (page 15 of Guardians Of The Forests)
+* Sometimes text is erroneusly marked as sidebar text (page 15 of Guardians Of The Forests)
+* Headings on two lines are not always recognized as headings
+* Paragraphs split on two columns
+
+Known problems, I'm ignoring:
+* Tables
+* bold text
+* italics text
+* indentations
+* lists (bullets)
+* tabulation
+
+As far as I know these are difficult or very difficult to sort out and I don't have much use for them.
