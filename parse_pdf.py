@@ -185,6 +185,15 @@ def to_text(filepath, outpath):
 
 def write_file(file_data, new_name, outpath):
     with open(os.path.join(outpath, new_name), "w", encoding="utf-8") as f:
+        # insert licence and trademark legalese to the file
+        f.writelines('Based on the material for Ars Magica, ©1993–2024, licensed by Trident, Inc. d/b/a Atlas Games®, under Creative Commons Attribution-ShareAlike 4.0 International license 4.0 ("CC-BY-SA 4.0")\n')
+        f.writelines('https://creativecommons.org/licenses/by-sa/4.0/\n')
+        f.writelines('\n')
+        f.writelines('Ars Magica Open License Logo ©2024 Trident, Inc. The Ars Magica Open License Logo, Ars Magica, and Mythic Europe are trademarks of Trident, Inc., and are used with permission.\n')
+        f.writelines('\n')
+        f.writelines('Order of Hermes, Tremere, Doissetep, and Grimgroth are trademarks of Paradox Interactive AB and are used with permission.\n')
+        f.writelines('\n')
+        f.writelines('\n')
         for page_structure in file_data:
             sidebar_texts = ""
             if page_structure.get('chapter'):
