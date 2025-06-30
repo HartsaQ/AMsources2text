@@ -1,9 +1,53 @@
+import pprint
 import click
 import pymupdf
 import glob
 import os
 
 from book_data import book_settings
+
+lower_cased = ['of', 'the', 'follower', 'de', 'al', 'and', 'von', 'maga', 'in', 'la', 'an', 'a', 'for']
+
+def fix_h4(h4_string):
+    if len(h4_string) == 0:
+        return ''
+    new_string = []
+    capitalize = False
+    for index, h4_word in enumerate(h4_string.split(" ")):
+        if len(h4_word) == 0:
+            continue
+        if index == 0 and len(h4_word) > 2:
+            new_string.append(h4_word[0].upper() + h4_word[1:].lower())
+            if h4_word[-1] == ":":
+                capitalize = True
+            else:
+                capitalize = False
+        elif capitalize:
+            new_string.append(h4_word[0].upper() + h4_word[1:].lower())
+            if h4_word[-1] == ":":
+                capitalize = True
+            else:
+                capitalize = False
+        elif h4_word.startswith('('):
+            new_string.append("(" + h4_word[1].upper() + h4_word[2:].lower())
+            if h4_word[-1] == ":":
+                capitalize = True
+            else:
+                capitalize = False
+        elif h4_word.lower() in lower_cased:
+            new_string.append(h4_word.lower())
+            if h4_word[-1] == ":":
+                capitalize = True
+            else:
+                capitalize = False
+        else:
+            new_string.append(h4_word[0].upper() + h4_word[1:].lower())
+            if h4_word[-1] == ":":
+                capitalize = True
+            else:
+                capitalize = False
+
+    return " ".join(new_string)
 
 def clean_block(block: str):
     one_line = " ".join([line.strip() for line in block.split('\n')])
@@ -149,36 +193,44 @@ def to_text(filepath, outpath):
                         continue
                     if block[0].startswith("Chapter"):
                         page_structure['chapter'] = block[0]
-                        block[3] = 1
+                        block[3] = 2
                         continue
                     for heading_text, heading_level in headings:
                         heading_length = len(heading_text)
-                        block_len = len(block[0])
-                        check_length = min(heading_length, 20, block_len)
+                        block_length = len(block[0])
+                        check_length = min(heading_length, 20, block_length)
                         # Note next chapter can start with same text as it's heading
-                        if abs(heading_length-block_len) <2 and block[0][:check_length] == heading_text[:check_length]:
+                        if abs(heading_length-block_length) <2 and block[0][:check_length] == heading_text[:check_length]:
                             block[3] = heading_level
-                            if heading_level == 2:
+                            if heading_level == 1:
                                 page_structure['main_heading'] = block[0]
+                            elif heading_level == 3:
+                                pass
+                            elif heading_level == 4:
+                                block[0] = fix_h4(block[0])
                         else:
                             # Heading texts can have odd amount of space bars
                             # And capitals in odd places
                             # Note a paragraph can start with same text as it's heading
-                            temp_heading = heading_text.replace(" ", "").lower()
-                            temp_block = block[0].replace(" ", "").lower()
+                            # headings may also spun over two lines
+                            temp_heading = heading_text.replace(" ", "").lower().replace("\n", "")
+                            temp_block = block[0].replace(" ", "").lower().replace("\n", "")
                             heading_length = len(temp_heading)
-                            block_len = len(block[0])
-                            check_length = min(heading_length, 20, block_len)
-                            if abs(heading_length-block_len) <5 and temp_block[:check_length] == temp_heading[:check_length]:
+                            block_length = len(temp_block)
+                            check_length = min(heading_length, 20, block_length)
+                            if abs(heading_length-block_length) <5 and temp_block[:check_length] == temp_heading[:check_length]:
                                 block[3] = heading_level
-                                if heading_level == 2:
+                                if heading_level == 1:
                                     page_structure['main_heading'] = block[0]
+                                elif heading_level == 3:
+                                    pass
+                                elif heading_level == 4:
+                                    block[0] = fix_h4(block[0])
 
                 page_structure['blocks'] = cleaned_page
                 file_data.append(page_structure)
 
-
-            new_name = source_name.removesuffix(".pdf").removesuffix(".PDF")+".txt"
+            new_name = source_name.partition("_")[2].removesuffix(".pdf").removesuffix(".PDF")+".txt"
             write_file(file_data, new_name, outpath)
 
 
@@ -186,20 +238,14 @@ def to_text(filepath, outpath):
 def write_file(file_data, new_name, outpath):
     with open(os.path.join(outpath, new_name), "w", encoding="utf-8") as f:
         # insert licence and trademark legalese to the file
-        f.writelines('Based on the material for Ars Magica, ©1993–2024, licensed by Trident, Inc. d/b/a Atlas Games®, under Creative Commons Attribution-ShareAlike 4.0 International license 4.0 ("CC-BY-SA 4.0")\n')
-        f.writelines('https://creativecommons.org/licenses/by-sa/4.0/\n')
-        f.writelines('\n')
-        f.writelines('Ars Magica Open License Logo ©2024 Trident, Inc. The Ars Magica Open License Logo, Ars Magica, and Mythic Europe are trademarks of Trident, Inc., and are used with permission.\n')
-        f.writelines('\n')
-        f.writelines('Order of Hermes, Tremere, Doissetep, and Grimgroth are trademarks of Paradox Interactive AB and are used with permission.\n')
-        f.writelines('\n')
-        f.writelines('\n')
+        f.writelines(legalese())
         for page_structure in file_data:
             sidebar_texts = ""
             if page_structure.get('chapter'):
                 f.writelines(f"\n<h1>{page_structure['chapter']}</h1>\n\n")
             if page_structure.get('main_heading'):
                 f.writelines(f"\n<h2>{page_structure['main_heading']}</h2>\n\n")
+
             for block in page_structure['blocks']:
                 if block[3] in [1,2]:
                     continue
@@ -223,6 +269,19 @@ def write_file(file_data, new_name, outpath):
                     f.writelines(f"\n<div sidebars>\n")
                     f.writelines(sidebar_texts)
                     f.writelines(f"</div sidebars>\n\n")
+
+
+def legalese():
+    legalese_string = "\n\nLEGALESE\n\n"
+    legalese_string += 'Based on the material for Ars Magica, ©1993–2024, licensed by Trident, Inc. d/b/a Atlas Games®, under Creative Commons Attribution-ShareAlike 4.0 International license 4.0 ("CC-BY-SA 4.0")\n'
+    legalese_string += 'https://creativecommons.org/licenses/by-sa/4.0/\n'
+    legalese_string += '\n'
+    legalese_string += 'Ars Magica Open License Logo ©2024 Trident, Inc. The Ars Magica Open License Logo, Ars Magica, and Mythic Europe are trademarks of Trident, Inc., and are used with permission.\n'
+    legalese_string += '\n'
+    legalese_string += 'Order of Hermes, Tremere, Doissetep, and Grimgroth are trademarks of Paradox Interactive AB and are used with permission.\n'
+    legalese_string += '\n\n'
+
+    return legalese_string
 
 
 if __name__ == '__main__':
