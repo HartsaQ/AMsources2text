@@ -43,12 +43,6 @@ It is fitted to parse Ars Magica sourcebooks. It relies on commonalities among t
 * Sidebar texts are set on top of an image
 * Usage of headers
 
-### Known problems I will look into:
-* Some main headings are missing (for example page 15 of Guardians Of The Forests)
-* Sometimes text is erroneusly marked as sidebar text (for example page 15 of Guardians Of The Forests)
-* Headings on two lines are not always recognized as headings
-* Paragraphs split on two columns
-
 ### Known problems I'm ignoring:
 * Tables
 * bold text
