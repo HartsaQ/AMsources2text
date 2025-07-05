@@ -7,6 +7,7 @@ import os
 from book_data import book_settings
 
 lower_cased = ['of', 'the', 'follower', 'de', 'al', 'and', 'von', 'maga', 'in', 'la', 'an', 'a', 'for']
+chapter_starters = ("Chapter", "Introduction", "Appendix", "Supplement")
 
 def fix_h4(h4_string):
     if len(h4_string) == 0:
@@ -90,7 +91,7 @@ def drop_headers_and_page_numbers(blocks, headers):
     results_list = []
     # There are no headers on pages starting a new Chapter
     # Helps at least to get "The Rhine Tribunal" heading to page 4
-    chapter_page = any([block[0].strip().startswith('Chapter') for block in blocks])
+    chapter_page = any([block[0].strip().startswith(chapter_starters) for block in blocks])
     for block in blocks:
         if not chapter_page and block[0] in headers:
             continue
@@ -124,7 +125,7 @@ def find_headings(page):
                 if span['size'] > 30:
                     types.append((text, 1))
                 # drop chapter headings
-                elif span['font'] in ['GoudyTextMT-LombardicCap'] and "Chapter" in span['text']:
+                elif span['font'] in ['GoudyTextMT-LombardicCap'] and span['text'].strip().startswith(chapter_starters):
                     types.append((text, 2))
                 elif span['font'] in ['GoudyTextMT-LombardicCap']:
                     types.append((text, 3))
@@ -191,7 +192,8 @@ def to_text(filepath, outpath):
                 for block in cleaned_page:
                     if block[0].strip() == "":
                         continue
-                    if block[0].startswith("Chapter"):
+                    if block[0].startswith("Chapter") and len(block[0].split()) < 10:
+                        print(block[0])
                         page_structure['chapter'] = block[0]
                         block[3] = 2
                         continue
@@ -231,7 +233,8 @@ def to_text(filepath, outpath):
                 file_data.append(page_structure)
 
             new_name = source_name.partition("_")[2].removesuffix(".pdf").removesuffix(".PDF")+".txt"
-            write_file(file_data, new_name, outpath)
+            # write_file(file_data, new_name, outpath)
+            write_redcap(file_data, new_name, outpath)
 
 
 
@@ -270,6 +273,65 @@ def write_file(file_data, new_name, outpath):
                     f.writelines(sidebar_texts)
                     f.writelines(f"</div sidebars>\n\n")
 
+def restructure(file_data):
+    redcap_data = {}
+    chapter = "Introduction"
+    chapter_blocks = []
+    for page_structure in file_data:
+        if page_structure.get('chapter'):
+            if len(chapter_blocks) > 1 and len(page_structure.get('chapter')) > 0:
+                redcap_data[chapter] = chapter_blocks
+                chapter = page_structure.get('chapter')
+                chapter_blocks = []
+            elif len(page_structure.get('chapter')) > 0:
+                chapter = page_structure.get('chapter')
+        for block in page_structure['blocks']:
+            if block[3] in [0, 1, 3, 4]:
+                chapter_blocks.append(block)
+
+    redcap_data[chapter] = chapter_blocks
+
+    return redcap_data
+
+
+def write_redcap(file_data, new_name, outpath):
+    redcap_data = restructure(file_data)
+    for chapter_name, chapter_blocks in redcap_data.items():
+        filename = new_name.removesuffix(".txt")+"_"+"_".join(chapter_name.split(" ")[:2])+".txt"
+        with open(os.path.join(outpath, filename), "w", encoding="utf-8") as f:
+            sidebars = False
+            for block in chapter_blocks:
+                if block[2] == 1:
+                    if sidebars:
+                        pass
+                    else:
+                        sidebars = True
+                        f.writelines('{|style="border-style: solid; border-width: 3px; border-color: chocolate"\n|style="padding-left: 7px; padding-right: 7px"|\n')
+                else:
+                    if sidebars:
+                        f.writelines("\n|}\n")
+                        sidebars = False
+                    else:
+                        pass
+
+                if block[3] == 1:
+                    f.writelines(f"\n={block[0]}=\n\n")
+                elif block[3] == 3:
+                    text = f"\n=={block[0]}==\n\n"
+                    f.writelines(text)
+                elif block[3] == 4:
+                    text = f"\n==={block[0]}===\n\n"
+                    f.writelines(text)
+                else:
+                    text = f"''{block[0]}''\n"
+                    f.writelines(text)
+
+            # file endings
+            if sidebars:
+                f.writelines("\n|}\n")
+            f.writelines("===Attribution===\n")
+            f.writelines("{{OpenArs Attribution}}\n")
+            f.writelines("{{ArsMnavbox}}\n")
 
 def legalese():
     legalese_string = "\n\nLEGALESE\n\n"
