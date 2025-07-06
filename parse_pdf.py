@@ -7,7 +7,8 @@ import os
 from book_data import book_settings
 
 lower_cased = ['of', 'the', 'follower', 'de', 'al', 'and', 'von', 'maga', 'in', 'la', 'an', 'a', 'for']
-chapter_starters = ("Chapter", "Introduction", "Appendix", "Supplement")
+chapter_starters = ("Chapter", "Introduction", "Appendices", "Supplement")
+chapter_numbers = ("One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen")
 
 def fix_h4(h4_string):
     if len(h4_string) == 0:
@@ -87,11 +88,28 @@ def separate_page(page, ignore_images):
                 page_contents.append([clean_block(block[4]), block[5], 0, 0, page.number])
         return page_contents
 
+def is_chapter_heading(some_text):
+    some_words = some_text.split(' ')
+    if len(some_words)  < 2:
+        return False
+    if some_words[0] == "Chapter" and some_words[1].isnumeric():
+        return False
+    if some_words[0] in chapter_starters and some_words[1] in chapter_numbers and len(some_words) < 10:
+        return True
+    # black monks of glastonbury - unfortunatelly sourcebook would need much more work
+    # if some_words[0].title() in chapter_starters and some_words[1].removesuffix(':').title() in chapter_numbers and len(some_words) < 10:
+    #    return True
+    # if some_words[0].title() == "Appendix" and some_words[1] in ["I:", "II:", "III:"]:
+    #    return True
+
+    return False
+
+
 def drop_headers_and_page_numbers(blocks, headers):
     results_list = []
     # There are no headers on pages starting a new Chapter
     # Helps at least to get "The Rhine Tribunal" heading to page 4
-    chapter_page = any([block[0].strip().startswith(chapter_starters) for block in blocks])
+    chapter_page = any([is_chapter_heading(block[0].strip()) for block in blocks])
     for block in blocks:
         if not chapter_page and block[0] in headers:
             continue
@@ -125,7 +143,7 @@ def find_headings(page):
                 if span['size'] > 30:
                     types.append((text, 1))
                 # drop chapter headings
-                elif span['font'] in ['GoudyTextMT-LombardicCap'] and span['text'].strip().startswith(chapter_starters):
+                elif span['font'] in ['GoudyTextMT-LombardicCap'] and is_chapter_heading(span['text'].strip()):
                     types.append((text, 2))
                 elif span['font'] in ['GoudyTextMT-LombardicCap']:
                     types.append((text, 3))
@@ -192,8 +210,8 @@ def to_text(filepath, outpath):
                 for block in cleaned_page:
                     if block[0].strip() == "":
                         continue
-                    if block[0].startswith("Chapter") and len(block[0].split()) < 10:
-                        print(block[0])
+                    if is_chapter_heading(block[0]):
+                        print("Heading", block[0])
                         page_structure['chapter'] = block[0]
                         block[3] = 2
                         continue

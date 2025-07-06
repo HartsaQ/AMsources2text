@@ -117,7 +117,7 @@ book_settings = {
         "headers": [
             "Ancient Magic"
         ],
-        "ignore_images": [582, 583, 551, 555, 560]
+        "ignore_images": [582, 583, 551, 555, 560],
         "limits": {
             "end": 143,
             "start": 5
@@ -490,7 +490,7 @@ book_settings = {
         }
     },
     "AG3402v2_BlackMonks.pdf": {
-        "headers": [],
+        "headers": ["THE BLACK MONKS OF GLASTONBURY"],
         "ignore_images": [90, 739, 829],
         "limits": {
             "end": 80,
